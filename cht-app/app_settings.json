@@ -1,0 +1,92 @@
+{
+    "_id": "settings",
+    "locale": "en",
+    "country_code": "+254",
+    "default_country_code": "254",
+    "contact_types": [
+          {
+                  "id": "district_hospital",
+                  "name_key": "contact.type.district_hospital",
+                  "group_key": "contact.type.district_hospital.plural",
+                  "create_key": "contact.type.district_hospital.new",
+                  "edit_key": "contact.type.district_hospital.edit",
+                  "icon": "medic-health-center",
+                  "create_form": "form:contact:district_hospital:create",
+                  "edit_form": "form:contact:district_hospital:edit"
+          },
+          {
+                  "id": "health_center",
+                  "name_key": "contact.type.health_center",
+                  "group_key": "contact.type.health_center.plural",
+                  "create_key": "contact.type.health_center.new",
+                  "edit_key": "contact.type.health_center.edit",
+                  "icon": "medic-health-center",
+                  "parents": ["district_hospital"],
+                  "create_form": "form:contact:health_center:create",
+                  "edit_form": "form:contact:health_center:edit"
+          },
+          {
+                  "id": "clinic",
+                  "name_key": "contact.type.clinic",
+                  "group_key": "contact.type.clinic.plural",
+                  "create_key": "contact.type.clinic.new",
+                  "edit_key": "contact.type.clinic.edit",
+                  "icon": "medic-clinic",
+                  "parents": ["health_center"],
+                  "create_form": "form:contact:clinic:create",
+                  "edit_form": "form:contact:clinic:edit",
+                  "count_visits": true
+          },
+          {
+                  "id": "person",
+                  "name_key": "contact.type.person",
+                  "group_key": "contact.type.person.plural",
+                  "create_key": "contact.type.person.new",
+                  "edit_key": "contact.type.person.edit",
+                  "icon": "medic-person",
+                  "parents": ["clinic", "health_center"],
+                  "create_form": "form:contact:person:create",
+                  "edit_form": "form:contact:person:edit",
+                  "person": true
+          }
+    ],
+    "forms": {
+          "stock_report": {
+                  "meta": {
+                            "code": "stock_report",
+                            "icon": "icon-healthcare-medicine",
+                            "translation_key": "form.stock_report.title"
+                  }
+          }
+    },
+    "user_roles": {
+          "chp": {
+                  "offline_login": true,
+                  "forms": ["stock_report"],
+                  "tasks": ["monthly_stock_report"]
+          },
+          "chu_supervisor": {
+                  "offline_login": false,
+                  "forms": [],
+                  "tasks": []
+          }
+    },
+    "tasks": {
+          "rules_engine_version": 3
+    },
+    "app_url": "http://localhost:5988",
+    "project_name": "CHP-SCIS Nairobi County Simulation",
+    "branding": {
+          "name": "CHP-SCIS",
+          "logo": "branding/logo.png"
+    },
+    "assetlinks": [],
+    "transitions": {
+          "maintain_info_document": true,
+          "update_clinics": false,
+          "registration": false,
+          "accept_patient_reports": false,
+          "generate_patient_id_on_people": false,
+          "generate_shortcode_on_contacts": false
+    }
+}
