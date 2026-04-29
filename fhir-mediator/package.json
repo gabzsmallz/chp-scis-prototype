@@ -1,0 +1,24 @@
+{
+    "name": "fhir-mediator",
+    "version": "1.0.0",
+    "description": "CHP-SCIS FHIR R4 Mediator: bridges Medic CHT stock reports to iLMIS and DHIS2 via OpenHIM",
+    "main": "src/index.js",
+    "scripts": {
+          "start": "node src/index.js",
+          "dev": "nodemon src/index.js"
+    },
+    "dependencies": {
+          "axios": "^1.6.0",
+          "express": "^4.18.2",
+          "fhir": "^4.12.0",
+          "node-openhim-mediator-utils": "^3.2.0",
+          "pg": "^8.11.3",
+          "winston": "^3.11.0"
+    },
+    "devDependencies": {
+          "nodemon": "^3.0.2"
+    },
+    "engines": {
+          "node": ">=20.0.0"
+    }
+}
