@@ -1,92 +1,127 @@
 {
-    "_id": "settings",
-    "locale": "en",
-    "country_code": "+254",
-    "default_country_code": "254",
-    "contact_types": [
-          {
-                  "id": "district_hospital",
-                  "name_key": "contact.type.district_hospital",
-                  "group_key": "contact.type.district_hospital.plural",
-                  "create_key": "contact.type.district_hospital.new",
-                  "edit_key": "contact.type.district_hospital.edit",
-                  "icon": "medic-health-center",
-                  "create_form": "form:contact:district_hospital:create",
-                  "edit_form": "form:contact:district_hospital:edit"
-          },
-          {
-                  "id": "health_center",
-                  "name_key": "contact.type.health_center",
-                  "group_key": "contact.type.health_center.plural",
-                  "create_key": "contact.type.health_center.new",
-                  "edit_key": "contact.type.health_center.edit",
-                  "icon": "medic-health-center",
-                  "parents": ["district_hospital"],
-                  "create_form": "form:contact:health_center:create",
-                  "edit_form": "form:contact:health_center:edit"
-          },
-          {
-                  "id": "clinic",
-                  "name_key": "contact.type.clinic",
-                  "group_key": "contact.type.clinic.plural",
-                  "create_key": "contact.type.clinic.new",
-                  "edit_key": "contact.type.clinic.edit",
-                  "icon": "medic-clinic",
-                  "parents": ["health_center"],
-                  "create_form": "form:contact:clinic:create",
-                  "edit_form": "form:contact:clinic:edit",
-                  "count_visits": true
-          },
-          {
-                  "id": "person",
-                  "name_key": "contact.type.person",
-                  "group_key": "contact.type.person.plural",
-                  "create_key": "contact.type.person.new",
-                  "edit_key": "contact.type.person.edit",
-                  "icon": "medic-person",
-                  "parents": ["clinic", "health_center"],
-                  "create_form": "form:contact:person:create",
-                  "edit_form": "form:contact:person:edit",
-                  "person": true
-          }
-    ],
-    "forms": {
-          "stock_report": {
-                  "meta": {
-                            "code": "stock_report",
-                            "icon": "icon-healthcare-medicine",
-                            "translation_key": "form.stock_report.title"
-                  }
-          }
+  "_id": "settings",
+  "locale": "en",
+  "country_code": "+254",
+  "default_country_code": "254",
+  "contact_types": [
+    {
+      "id": "district_hospital",
+      "name_key": "contact.type.district_hospital",
+      "group_key": "contact.type.district_hospital.plural",
+      "create_key": "contact.type.district_hospital.new",
+      "edit_key": "contact.type.district_hospital.edit",
+      "icon": "medic-health-center",
+      "create_form": "form:contact:district_hospital:create",
+      "edit_form": "form:contact:district_hospital:edit"
     },
-    "user_roles": {
-          "chp": {
-                  "offline_login": true,
-                  "forms": ["stock_report"],
-                  "tasks": ["monthly_stock_report"]
-          },
-          "chu_supervisor": {
-                  "offline_login": false,
-                  "forms": [],
-                  "tasks": []
-          }
+    {
+      "id": "health_center",
+      "name_key": "contact.type.health_center",
+      "group_key": "contact.type.health_center.plural",
+      "create_key": "contact.type.health_center.new",
+      "edit_key": "contact.type.health_center.edit",
+      "icon": "medic-health-center",
+      "parents": [
+        "district_hospital"
+      ],
+      "create_form": "form:contact:health_center:create",
+      "edit_form": "form:contact:health_center:edit"
     },
-    "tasks": {
-          "rules_engine_version": 3
+    {
+      "id": "clinic",
+      "name_key": "contact.type.clinic",
+      "group_key": "contact.type.clinic.plural",
+      "create_key": "contact.type.clinic.new",
+      "edit_key": "contact.type.clinic.edit",
+      "icon": "medic-clinic",
+      "parents": [
+        "health_center"
+      ],
+      "create_form": "form:contact:clinic:create",
+      "edit_form": "form:contact:clinic:edit",
+      "count_visits": true
     },
-    "app_url": "http://localhost:5988",
-    "project_name": "CHP-SCIS Nairobi County Simulation",
-    "branding": {
-          "name": "CHP-SCIS",
-          "logo": "branding/logo.png"
-    },
-    "assetlinks": [],
-    "transitions": {
-          "maintain_info_document": true,
-          "update_clinics": false,
-          "registration": false,
-          "accept_patient_reports": false,
-          "generate_patient_id_on_people": false,
-          "generate_shortcode_on_contacts": false
+    {
+      "id": "person",
+      "name_key": "contact.type.person",
+      "group_key": "contact.type.person.plural",
+      "create_key": "contact.type.person.new",
+      "edit_key": "contact.type.person.edit",
+      "icon": "medic-person",
+      "parents": [
+        "clinic",
+        "health_center"
+      ],
+      "create_form": "form:contact:person:create",
+      "edit_form": "form:contact:person:edit",
+      "person": true
     }
+  ],
+  "forms": {
+    "stock_report": {
+      "meta": {
+        "code": "stock_report",
+        "icon": "icon-healthcare-medicine",
+        "translation_key": "form.stock_report.title"
+      }
+    }
+  },
+  "user_roles": {
+    "chp": {
+      "offline_login": true,
+      "forms": [
+        "stock_report"
+      ],
+      "tasks": [
+        "monthly_stock_report"
+      ]
+    },
+    "chu_supervisor": {
+      "offline_login": false,
+      "forms": [],
+      "tasks": []
+    }
+  },
+  "tasks": {
+    "rules": "(()=>{var t={736(t){function e(t,o){var r=Object.keys(t);for(var n in r){var a=r[n];switch(typeof t[a]){case'object':e(t[a],o);break;case'function':t[a]=t[a].bind(o)}}}function o(t){var e=Object.assign({},t),r=Object.keys(e);for(var n in r){var a=r[n];if(Array.isArray(e[a])){e[a]=e[a].slice(0);for(var i=0;i<e[a].length;++i)'object'==typeof e[a][i]&&(e[a][i]=o(e[a][i]))}else'object'==typeof e[a]&&(e[a]=o(e[a]))}return e}t.exports=function(t){var r={};e(t,r),r.definition=o(t)}},755(t,e,o){var r=o(736);function n(t,e,o,r,n,a){var i=!!a;if(n.contact){var c='contact'===n.contact.type?n.contact.contact_type:n.contact.type,s=i?a.form:c;if(!(t.appliesToType&&t.appliesToType.indexOf(s)<0)&&(!t.appliesIf||t.appliesIf(n,a)))for(var p=i?a:n.contact,l=function(t,e,o){var r;return r='function'==typeof t.idType?t.idType(e,o):'report'===t.idType?o&&o._id:e.contact&&e.contact._id,Array.isArray(r)||(r=[r]),r}(t,n,a),d=!t.passesIf||!!t.passesIf(n,a),f=function(t,e,o,r){if('function'==typeof t.date)return t.date(o,r)||e.now().getTime();if(void 0===t.date||null===t.date||'now'===t.date)return e.now().getTime();if('reported'===t.date)return r?r.reported_date:o.contact.reported_date;throw new Error('Unrecognised value for target.date: '+t.date)}(t,o,n,a),u=t.groupBy&&t.groupBy(n,a),y=0;y<l.length;++y){var _=new e({_id:l[y]+'~'+t.id,contact:n.contact,deleted:!!p.deleted,type:t.id,pass:d,groupBy:u,date:f});t.emitCustom?t.emitCustom(v,_,n,a):v(_)}}function v(t){r('target',t)}}t.exports=function(t,e,o,a,i){for(var c=0;c<t.length;++c){var s=t[c];switch(r(s),s.appliesTo){case'contacts':n(s,a,o,i,e);break;case'reports':for(var p=0;p<e.reports.length;++p){n(s,a,o,i,e,e.reports[p])}break;default:throw new Error('Unrecognised target.appliesTo: '+s.appliesTo)}}}},43(t){t.exports={defaultResolvedIf:function(t,e,o,r,n){var a,i;n||(n=Utils);var c=function(t){var e;if(!t||!t.actions)return;return(e=t.actions.find(function(t){return!t.type||'report'===t.type}))&&e.form}(this.definition);if(!c)throw new Error('Could not find the default resolving form!');return a=0,a=e?Math.max(n.addDate(r,-o.start).getTime(),e.reported_date+1):n.addDate(r,-o.start).getTime(),i=n.addDate(r,o.end+1).getTime(),n.isFormSubmittedInWindow(t.reports,c,a,i)}}},455(t,e,o){var r=o(736),n=o(43);function a(t,e,o,r,n,a){var i;if(t.appliesToType){var c;if('contacts'===t.appliesTo){if(!n.contact)return;c='contact'===n.contact.type?n.contact.contact_type:n.contact.type}else{if(!a)return;c=a.form}if(-1===t.appliesToType.indexOf(c))return}if('scheduled_tasks'===t.appliesTo||!t.appliesIf||t.appliesIf(n,a))if('scheduled_tasks'===t.appliesTo){if(a&&t.appliesIf){if(!a.scheduled_tasks)return;for(i=0;i<a.scheduled_tasks.length;i++)t.appliesIf(n,a,i)&&p(i)}}else p();function s(t,e,o){var r;return(r='function'==typeof t.contactLabel?t.contactLabel(e,o):t.contactLabel)?{name:r}:e.contact}function p(i){var c,p,d,f,u=null;for(c=0;c<t.events.length;c++){if((p=t.events[c]).dueDate)u=p.dueDate(p,n,a,i);else if(a)u=void 0!==i?new Date(e.addDate(new Date(a.scheduled_tasks[i].due),p.days)):new Date(e.addDate(new Date(a.reported_date),p.days));else if(p.dueDate)u=p.dueDate(p,n);else{var y=n.contact&&n.contact.reported_date?new Date(n.contact.reported_date):new Date;u=new Date(e.addDate(y,p.days))}e.isTimely(u,p)&&(f={_id:(a?a._id:n.contact&&n.contact._id)+'~'+(p.id||c)+'~'+t.name,deleted:!(!(n.contact&&n.contact.deleted||a)||!a.deleted),doc:n,contact:s(t,n,a),icon:t.icon,date:u,readyStart:p.start||0,readyEnd:p.end||0,title:t.title,resolved:t.resolvedIf(n,a,p,u,i),actions:l(t.actions,p)},void 0!==i&&(f._id+='-'+i),'function'==typeof(d=t.priority)&&(d=d(n,a,p,u,i)),d&&(f.priority=d.level,f.priorityLabel=d.label),r('task',new o(f)))}}function l(e,o){return t.actions.map(function(t){return function(t,e){var o={source:'task',source_id:a?a._id:n.contact&&n.contact._id,contact:n.contact};t.modifyContent&&t.modifyContent(o,n,a,e);return{type:t.type||'report',form:t.form,label:t.label||'Follow up',content:o}}(t,o)})}}t.exports=function(t,e,o,i,c){if(t)for(var s,p,l=0;l<t.length;++l)switch('function'!=typeof(s=Object.assign({},t[l],n)).resolvedIf&&(s.resolvedIf=function(t,e,r,n){return s.defaultResolvedIf(t,e,r,n,o)}),r(s),s.appliesTo){case'reports':case'scheduled_tasks':for(var d=0;d<e.reports.length;++d)p=e.reports[d],a(s,o,i,c,e,p);break;case'contacts':e.contact&&a(s,o,i,c,e);break;default:throw new Error('Unrecognised task.appliesTo: '+s.appliesTo)}}},931(t){t.exports=[{id:'stock-reports-this-month',type:'count',icon:'icon-healthcare-medicine',goal:1,translation_key:'targets.stock_reports.title',subtitle_translation_key:'targets.stock_reports.subtitle',appliesTo:'reports',appliesIf:function(t,e){if('stock_report'!==e.form)return!1;var o=new Date(e.reported_date),r=new Date;return o.getFullYear()===r.getFullYear()&&o.getMonth()===r.getMonth()}},{id:'active-stockouts',type:'count',icon:'icon-warning',goal:0,translation_key:'targets.stockouts.title',subtitle_translation_key:'targets.stockouts.subtitle',appliesTo:'reports',appliesIf:function(t,e){if('stock_report'!==e.form)return!1;var o=e.fields||{},r={amoxicillin_stock:10,ors_stock:5,zinc_stock:10,rdt_stock:5,fp_pills_stock:3,fp_injectables_stock:2};return Object.keys(r).some(function(t){return parseInt(null!==o[t]&&void 0!==o[t]?o[t]:999,10)<=r[t]})}}]},991(t){const e=['amoxicillin','ors','zinc','rdt','fp_pills','fp_injectables'],o={amoxicillin:10,ors:5,zinc:10,rdt:5,fp_pills:3,fp_injectables:2};function r(t){return t.filter(t=>'stock_report'===t.form).sort((t,e)=>e.reported_date-t.reported_date)[0]}function n(t){return!(!t||!t.fields)&&e.some(e=>parseInt(t.fields[`${e}_stock`]??999,10)<=o[e])}const a={name:'monthly_stock_report',icon:'icon-healthcare-medicine',title:'Monthly Stock Report Due',appliesTo:'contacts',appliesToType:['person'],appliesIf:function(t){return t.contact&&'chp'===t.contact.role},resolvedIf:function(t,e,o,r){const n=r||new Date;return function(t,e){return t.some(t=>{if('stock_report'!==t.form)return!1;const o=new Date(t.reported_date);return o.getFullYear()===e.getFullYear()&&o.getMonth()===e.getMonth()})}(t.reports,n)},events:[{id:'stock-report-due',start:0,end:6,dueDate:function(t,e){const o=new Date;return new Date(o.getFullYear(),o.getMonth(),1)}}],actions:[{type:'report',form:'stock_report',label:'Submit Stock Report'}]},i={name:'stockout_followup',icon:'icon-warning',title:'Stockout Follow-up — Confirm Resupply',appliesTo:'contacts',appliesToType:['person'],appliesIf:function(t){if(!t.contact||'chp'!==t.contact.role)return!1;return n(r(t.reports))},resolvedIf:function(t,e,o,a){return!n(r(t.reports))},events:[{id:'stockout-followup',start:0,end:6,dueDate:function(t,e){const o=new Date;return new Date(o.getFullYear(),o.getMonth(),15)}}],actions:[{type:'report',form:'stock_report',label:'Update Stock Report'}]};t.exports=[a,i]}},e={};function o(r){var n=e[r];if(void 0!==n)return n.exports;var a=e[r]={exports:{}};return t[r](a,a.exports,o),a.exports}var r=o(991),n=o(931),a=o(455);o(755)(n,c,Utils,Target,emit),a(r,c,Utils,Task,emit),emit('_complete',{_id:!0})})();",
+    "isDeclarative": true,
+    "targets": {
+      "enabled": true,
+      "items": [
+        {
+          "id": "stock-reports-this-month",
+          "type": "count",
+          "goal": 1,
+          "translation_key": "targets.stock_reports.title",
+          "icon": "icon-healthcare-medicine",
+          "subtitle_translation_key": "targets.stock_reports.subtitle"
+        },
+        {
+          "id": "active-stockouts",
+          "type": "count",
+          "goal": 0,
+          "translation_key": "targets.stockouts.title",
+          "icon": "icon-warning",
+          "subtitle_translation_key": "targets.stockouts.subtitle"
+        }
+      ]
+    }
+  },
+  "app_url": "http://localhost:5988",
+  "project_name": "CHP-SCIS Nairobi County Simulation",
+  "branding": {
+    "name": "CHP-SCIS",
+    "logo": "branding/logo.png"
+  },
+  "assetlinks": [],
+  "transitions": {
+    "maintain_info_document": true,
+    "update_clinics": false,
+    "registration": false,
+    "accept_patient_reports": false,
+    "generate_patient_id_on_people": false,
+    "generate_shortcode_on_contacts": false
+  },
+  "contact_summary": "var ContactSummary = {}; !function(e,t){if('object'==typeof exports&&'object'==typeof module)module.exports=t();else if('function'==typeof define&&define.amd)define([],t);else{var o=t();for(var l in o)('object'==typeof exports?exports:e)[l]=o[l]}}(ContactSummary,()=>(()=>{var e=function(e){return(e||[]).filter(function(e){return'stock_report'===e.form}).sort(function(e,t){return t.reported_date-e.reported_date})[0]}(reports),t=e?e.fields:{},o=[],l=[],a=!1;[{key:'amoxicillin_stock',label:'Amoxicillin',threshold:10},{key:'ors_stock',label:'ORS',threshold:5},{key:'zinc_stock',label:'Zinc',threshold:10},{key:'rdt_stock',label:'RDT',threshold:5},{key:'fp_pills_stock',label:'OCP',threshold:3},{key:'fp_injectables_stock',label:'DMPA',threshold:2}].forEach(function(e){var o=parseInt(null!==t[e.key]&&void 0!==t[e.key]?t[e.key]:-1,10),n=o>=0&&o<=e.threshold;n&&(a=!0),l.push({label:e.label,value:o>=0?String(o):'—',icon:n?'icon-warning':null})}),e&&o.push({label:'Latest Stock Report',fields:[{label:'Date',value:new Date(e.reported_date).toLocaleDateString()}].concat(l)});var n={is_chp:'chp'===contact.role,has_stockout:a};return{fields:[{label:'Role',value:contact.role||'—'},{label:'CHU',value:contact.parent?contact.parent.name:'—'},{label:'Phone',value:contact.phone||'—'},{label:'Stockout',value:a?'YES':'No',icon:a?'icon-warning':null}],cards:o,context:n}})()); return ContactSummary;",
+  "purge": {}
 }

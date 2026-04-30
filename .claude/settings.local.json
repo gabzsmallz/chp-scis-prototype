@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:hub.docker.com)",
+      "WebFetch(domain:docs.communityhealthtoolkit.org)",
+      "Bash(docker search *)",
+      "WebFetch(domain:gallery.ecr.aws)",
+      "Bash(docker manifest *)",
+      "Bash(aws --version)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npm show *)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "Bash(npm --version)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)"
+    ]
+  }
+}

@@ -9,8 +9,6 @@
  * Reference: https://docs.communityhealthtoolkit.org/apps/reference/tasks/
  */
 
-const { STOCKOUT_THRESHOLD } = require('./tasks_config'); // optional; thresholds can be inline
-
 const COMMODITIES = ['amoxicillin', 'ors', 'zinc', 'rdt', 'fp_pills', 'fp_injectables'];
 const THRESHOLDS = { amoxicillin: 10, ors: 5, zinc: 10, rdt: 5, fp_pills: 3, fp_injectables: 2 };
 
@@ -61,13 +59,11 @@ const monthlyStockReportTask = {
     events: [
       {
               id: 'stock-report-due',
-              days: 0,
               start: 0,
               end: 6,
-              dueDate: function (event, contact) {
-                        // Due on the 1st of the current month
+              dueDate: function (_event, _contact) {
                 const now = new Date();
-                        return new Date(now.getFullYear(), now.getMonth(), 1);
+                return new Date(now.getFullYear(), now.getMonth(), 1);
               }
       }
         ],
@@ -96,20 +92,18 @@ const stockoutFollowupTask = {
           const latest = getLatestReport(contact.reports);
           return hasStockout(latest);
     },
-    resolvedIf: function (contact, report, event, dueDate) {
-          // Resolved when CHP submits a new stock report with all values above threshold
+    resolvedIf: function (contact, _report, _event, _dueDate) {
       const latest = getLatestReport(contact.reports);
           return !hasStockout(latest);
     },
     events: [
       {
               id: 'stockout-followup',
-              days: 0,
               start: 0,
               end: 6,
-              dueDate: function (event, contact) {
-                        const now = new Date();
-                        return new Date(now.getFullYear(), now.getMonth(), 15);
+              dueDate: function (_event, _contact) {
+                const now = new Date();
+                return new Date(now.getFullYear(), now.getMonth(), 15);
               }
       }
         ],

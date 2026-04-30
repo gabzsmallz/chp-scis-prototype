@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const mediatorUtils = require('node-openhim-mediator-utils');
+const mediatorUtils = require('openhim-mediator-utils');
 const winston = require('winston');
 const stockRoutes = require('./routes/stock');
 const reportsRoutes = require('./routes/reports');
