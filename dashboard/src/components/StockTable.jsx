@@ -1,68 +1,27 @@
 import React, { useState } from 'react';
 import {
   Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TableSortLabel, Chip, Typography, Box
+  TableHead, TableRow, TableSortLabel, Chip, Typography, Tooltip
 } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-const COMMODITIES = [
-  { key: 'amoxicillin', label: 'Amoxicillin', threshold: 10 },
-  { key: 'ors', label: 'ORS', threshold: 5 },
-  { key: 'zinc', label: 'Zinc', threshold: 10 },
-  { key: 'rdt', label: 'RDT', threshold: 5 },
-  { key: 'fp_pills', label: 'OCP', threshold: 3 },
-  { key: 'fp_injectables', label: 'DMPA', threshold: 2 }
-];
-
-function StockCell({ value, threshold }) {
-  const qty = parseInt(value ?? '-1', 10);
-  if (qty < 0) return <TableCell>—</TableCell>;
-  const low = qty <= threshold;
-  return (
-    <TableCell align="center">
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-        {low && <WarningIcon fontSize="small" color="warning" />}
-        <Typography variant="body2" color={low ? 'warning.dark' : 'text.primary'} fontWeight={low ? 700 : 400}>
-          {qty}
-        </Typography>
-      </Box>
-    </TableCell>
-  );
-}
+const LOW_STOCK_THRESHOLD = 5;
 
 export default function StockTable({ reports }) {
-  const [order, setOrder] = useState('desc');
-  const [orderBy, setOrderBy] = useState('occurrenceDateTime');
+  const [order, setOrder]   = useState('desc');
+  const [orderBy, setOrderBy] = useState('reported_date');
 
   if (!reports || reports.length === 0) {
     return (
       <Paper sx={{ p: 3, textAlign: 'center' }}>
         <Typography color="text.secondary">No stock reports received yet.</Typography>
-        <Typography variant="caption">CHPs need to submit stock reports via the CHT app.</Typography>
+        <Typography variant="caption">CHPs submit stock reports via the CHT app.</Typography>
       </Paper>
     );
   }
 
-  const rows = reports.map((r) => {
-    const items = {};
-    (r.suppliedItem || []).forEach((item) => {
-      const kems = item.itemCodeableConcept?.coding?.find((c) => c.system?.includes('kemsa'))?.code;
-      if (!kems) return;
-      const key = kems.replace('KEMSA-', '').replace('-', '_').toLowerCase();
-      items[key] = item.quantity?.value;
-    });
-    return {
-      id: r.id,
-      chp: r.supplier?.display || r.supplier?.reference || '—',
-      chu: r.destination?.display || '—',
-      date: r.occurrenceDateTime ? new Date(r.occurrenceDateTime).toLocaleDateString() : '—',
-      stockout: (r.extension?.length ?? 0) > 0,
-      ...items
-    };
-  });
-
-  const sorted = [...rows].sort((a, b) => {
+  const sorted = [...reports].sort((a, b) => {
     const av = a[orderBy] ?? '';
     const bv = b[orderBy] ?? '';
     return order === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
@@ -73,48 +32,66 @@ export default function StockTable({ reports }) {
     setOrderBy(col);
   };
 
+  const head = (key, label) => (
+    <TableCell key={key} sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+      <TableSortLabel
+        active={orderBy === key}
+        direction={orderBy === key ? order : 'asc'}
+        onClick={() => toggleSort(key)}
+        sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
+      >
+        {label}
+      </TableSortLabel>
+    </TableCell>
+  );
+
   return (
     <TableContainer component={Paper} elevation={2}>
       <Table size="small">
         <TableHead sx={{ bgcolor: '#1a6e3c' }}>
           <TableRow>
-            {['chp', 'chu', 'date'].map((col) => (
-              <TableCell key={col} sx={{ color: 'white', fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === col}
-                  direction={orderBy === col ? order : 'asc'}
-                  onClick={() => toggleSort(col)}
-                  sx={{ color: 'white !important', '& .MuiTableSortLabel-icon': { color: 'white !important' } }}
-                >
-                  {col.toUpperCase()}
-                </TableSortLabel>
-              </TableCell>
-            ))}
-            {COMMODITIES.map((c) => (
-              <TableCell key={c.key} align="center" sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.75rem' }}>
-                {c.label}
-              </TableCell>
-            ))}
-            <TableCell align="center" sx={{ color: 'white', fontWeight: 'bold' }}>STATUS</TableCell>
+            {head('chp_name',       'CHP')}
+            {head('chu_id',         'CHU')}
+            {head('commodity_name', 'Commodity')}
+            {head('quantity_on_hand',   'On Hand')}
+            {head('quantity_dispensed', 'Dispensed')}
+            {head('quantity_received',  'Received')}
+            {head('expiry_date',    'Nearest Expiry')}
+            {head('reported_date',  'Report Date')}
+            <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {sorted.map((row) => (
-            <TableRow key={row.id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: '#f9f9f9' } }}>
-              <TableCell>{row.chp}</TableCell>
-              <TableCell>{row.chu}</TableCell>
-              <TableCell>{row.date}</TableCell>
-              {COMMODITIES.map((c) => (
-                <StockCell key={c.key} value={row[c.key.replace('kemsa-', '')]} threshold={c.threshold} />
-              ))}
-              <TableCell align="center">
-                {row.stockout
-                  ? <Chip icon={<WarningIcon />} label="Stockout" color="warning" size="small" />
-                  : <Chip icon={<CheckCircleIcon />} label="OK" color="success" size="small" />
-                }
-              </TableCell>
-            </TableRow>
-          ))}
+          {sorted.map((row, i) => {
+            const qty       = parseInt(row.quantity_on_hand ?? 0, 10);
+            const isOut     = row.has_stockout || qty === 0;
+            const isLow     = !isOut && qty <= LOW_STOCK_THRESHOLD;
+            const expiry    = row.expiry_date  ? new Date(row.expiry_date).toLocaleDateString()  : '—';
+            const reportDt  = row.reported_date ? new Date(row.reported_date).toLocaleDateString() : '—';
+
+            return (
+              <TableRow key={i} hover sx={{ '&:nth-of-type(odd)': { bgcolor: '#f9f9f9' } }}>
+                <TableCell>{row.chp_name || row.chp_id || '—'}</TableCell>
+                <TableCell>{row.chu_id || '—'}</TableCell>
+                <TableCell>{row.commodity_name || row.commodity_code}</TableCell>
+                <TableCell align="center" sx={{ color: isOut ? '#c62828' : isLow ? '#e65100' : 'inherit', fontWeight: isOut || isLow ? 700 : 400 }}>
+                  {qty}
+                </TableCell>
+                <TableCell align="center">{row.quantity_dispensed ?? '—'}</TableCell>
+                <TableCell align="center">{row.quantity_received  ?? '—'}</TableCell>
+                <TableCell>{expiry}</TableCell>
+                <TableCell>{reportDt}</TableCell>
+                <TableCell align="center">
+                  {isOut
+                    ? <Tooltip title="Zero stock"><Chip icon={<WarningIcon />} label="STOCKOUT" color="error"   size="small" /></Tooltip>
+                    : isLow
+                      ? <Tooltip title={`≤${LOW_STOCK_THRESHOLD} units`}><Chip icon={<WarningIcon />} label="Low Stock" color="warning" size="small" /></Tooltip>
+                      : <Chip icon={<CheckCircleIcon />} label="OK" color="success" size="small" />
+                  }
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableContainer>

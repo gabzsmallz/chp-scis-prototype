@@ -14,5 +14,5 @@ COPY --from=builder /app/build /usr/share/nginx/html
 # nginx proxy config to forward /reports/* to fhir-mediator:3000
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 4000
+EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

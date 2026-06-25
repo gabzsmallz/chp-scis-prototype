@@ -117,6 +117,7 @@ services:
       retries: 5
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     networks:
       - chp-scis-net
 
@@ -177,13 +178,22 @@ services:
       - OPENHIM_USER=root@openhim.org
       - OPENHIM_PASSWORD=openhim1
       - ILMIS_FHIR_ENDPOINT=http://ilmis-stub:4500/fhir
+      - ILMIS_URL=http://ilmis-stub:4500
+      - DHIS2_URL=http://dhis2-stub:4501
       - DHIS2_API_URL=http://dhis2-stub:4501/api
+      - AFYAKE_URL=http://afyake-stub:4502
       - POSTGRES_URL=postgresql://cht:cht@postgres:5432/cht
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_DB=cht
+      - PG_USER=cht
+      - PG_PASSWORD=cht
       - COUCHDB_URL=http://admin:medic@couchdb:5984
       - NODE_ENV=development
     depends_on:
       - openhim-core
       - postgres
+      - afyake-stub
     networks:
       - chp-scis-net
 
@@ -208,6 +218,18 @@ services:
     restart: unless-stopped
     ports:
       - "4501:4501"
+    networks:
+      - chp-scis-net
+
+  # ─── AfyaKE Stub (mock facility EMR/LMIS — receives formal SupplyRequests) ───
+  afyake-stub:
+    build:
+      context: ./stubs/afyake
+      dockerfile: Dockerfile
+    container_name: afyake-stub
+    restart: unless-stopped
+    ports:
+      - "4502:4502"
     networks:
       - chp-scis-net
 

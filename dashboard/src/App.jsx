@@ -35,7 +35,7 @@ export default function App() {
       ]);
       setSummary(sumRes.data);
       setAlerts(alertsRes.data);
-      setReports(reportsRes.data?.entry?.map((e) => e.resource) ?? []);
+      setReports(Array.isArray(reportsRes.data) ? reportsRes.data : []);
       setLastRefresh(new Date().toLocaleTimeString());
       setError(null);
     } catch (err) {
@@ -107,7 +107,7 @@ export default function App() {
               <StockoutAlerts alerts={alerts} />
             </TabPanel>
             <TabPanel value={tab} index={2}>
-              <StockChart summary={summary} />
+              <StockChart reports={reports} />
             </TabPanel>
           </>
         )}

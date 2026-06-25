@@ -1,0 +1,112 @@
+{
+  "type": "form",
+  "_id": "form:stock_report",
+  "internalId": "stock_report",
+  "title": "CHP Stock Report",
+  "icon": "icon-healthcare-medicine",
+  "context": {
+    "person": false,
+    "place": true,
+    "expression": "user.role === 'chp'"
+  },
+  "fields": {
+    "inputs": {
+      "type": "group",
+      "appearance": "hidden",
+      "fields": {
+        "meta": {
+          "type": "group",
+          "fields": {
+            "location": { "type": "db-object", "map": "contact" }
+          }
+        }
+      }
+    },
+    "group_commodity": {
+      "type": "group",
+      "label": "Commodity Stock Entry",
+      "appearance": "field-list",
+      "fields": {
+        "commodity_code": {
+          "type": "select_one",
+          "label": "Commodity",
+          "hint": "Select the commodity you are reporting on",
+          "required": true,
+          "options": [
+            { "label": "Malaria RDT",                            "value": "KE-RDT-MAL-001"      },
+            { "label": "Artemether-Lumefantrine ACT (6-dose)",   "value": "KE-ACT-AL-001"       },
+            { "label": "ORS Sachets",                            "value": "KE-ORS-001"          },
+            { "label": "Zinc Sulphate 20mg",                     "value": "KE-ZINC-20MG-001"    },
+            { "label": "Vitamin A 200,000 IU",                   "value": "KE-VITA-200K-001"    },
+            { "label": "Insecticide-Treated Net (ITN)",          "value": "KE-ITN-001"          },
+            { "label": "Amoxicillin 250mg",                      "value": "KE-AMOX-250-001"     },
+            { "label": "Chlorhexidine 7.1% gel (cord care)",     "value": "KE-CHLORHEX-001"     },
+            { "label": "Albendazole 400mg (deworming)",          "value": "KE-DEWORMING-ALB-001"},
+            { "label": "SP/Fansidar (IPTp)",                     "value": "KE-FANSIDAR-001"     },
+            { "label": "Ferrous Sulphate + Folic Acid",          "value": "KE-IRON-FOLATE-001"  },
+            { "label": "Male Condoms (pack of 3)",               "value": "KE-FP-COND-001"      },
+            { "label": "Blood Glucose Test Strips",              "value": "KE-BP-STRIPS-001"    }
+          ]
+        },
+        "quantity_on_hand": {
+          "type": "integer",
+          "label": "Quantity on hand (current stock)",
+          "hint": "How many units do you have right now?",
+          "required": true,
+          "constraint": ". >= 0",
+          "constraint_message": "Must be 0 or more"
+        },
+        "quantity_dispensed": {
+          "type": "integer",
+          "label": "Quantity dispensed (since last report)",
+          "hint": "How many units did you give out since your last report?",
+          "required": true,
+          "constraint": ". >= 0"
+        },
+        "quantity_received": {
+          "type": "integer",
+          "label": "Quantity received (since last report)",
+          "hint": "How many units did you receive from the facility?",
+          "required": true,
+          "constraint": ". >= 0"
+        },
+        "expiry_date": {
+          "type": "date",
+          "label": "Nearest expiry date in stock",
+          "hint": "Date on the soonest-to-expire item",
+          "required": false
+        }
+      }
+    },
+    "group_context": {
+      "type": "group",
+      "label": "Report Context",
+      "appearance": "hidden",
+      "fields": {
+        "chp_id":     { "type": "string", "default": "inputs/meta/location/_id"        },
+        "chu_id":     { "type": "string", "default": "inputs/meta/location/parent/_id" },
+        "report_date":{ "type": "date",   "default": "today()"                         }
+      }
+    },
+    "summary": {
+      "type": "group",
+      "label": "Summary",
+      "appearance": "summary",
+      "fields": {
+        "stockout_alert": {
+          "type": "note",
+          "label": "STOCKOUT — request resupply from your facility immediately",
+          "relevant": "quantity_on_hand = 0"
+        },
+        "low_stock_alert": {
+          "type": "note",
+          "label": "LOW STOCK — consider requesting resupply soon",
+          "relevant": "quantity_on_hand > 0 and quantity_on_hand <= 5"
+        }
+      }
+    }
+  },
+  "actions": [
+    { "type": "report", "form": "stock_report" }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "afyake-stub",
+  "version": "1.0.0",
+  "description": "Mock AfyaKE facility EMR/LMIS endpoint — receives formal SupplyRequests from CHPs",
+  "main": "index.js",
+  "scripts": { "start": "node index.js" },
+  "dependencies": { "express": "^4.18.2" },
+  "engines": { "node": ">=20.0.0" }
+}

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/gabs_/OneDrive/Documents/Claude/Projects/Masters thesis/**)",
+      "Read(//c/Users/gabs_/.claude/projects/c--Users-gabs--OneDrive-Documents-Claude-Projects-Masters-thesis-chp-scis-prototype/memory/**)",
+      "PowerShell(docker compose -f \"c:/Users/gabs_/OneDrive/Documents/Claude/Projects/Masters thesis/chp-scis-prototype/docker-compose.yml\" up -d --build dashboard 2>&1)",
+      "Bash(git checkout *)"
+    ]
+  }
+}

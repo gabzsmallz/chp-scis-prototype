@@ -19,10 +19,10 @@ function KpiCard({ icon, label, value, color, subtitle }) {
 }
 
 export default function SummaryCards({ summary, alertCount }) {
-  const total = parseInt(summary?.total_reports ?? 0, 10);
-  const withStockout = parseInt(summary?.reports_with_stockout ?? 0, 10);
-  const ok = total - withStockout;
-  const lastDate = summary?.last_report_date
+  const total      = parseInt(summary?.total_reports          ?? 0, 10);
+  const chpsOut    = parseInt(summary?.chps_with_stockout     ?? alertCount ?? 0, 10);
+  const lines      = parseInt(summary?.stockout_commodity_lines ?? 0, 10);
+  const lastDate   = summary?.last_report_date
     ? new Date(summary.last_report_date).toLocaleDateString()
     : 'N/A';
 
@@ -34,25 +34,25 @@ export default function SummaryCards({ summary, alertCount }) {
           label="Total Reports"
           value={total}
           color="#1a6e3c"
-          subtitle="Stock reports received"
+          subtitle="Stock reports received from CHPs"
         />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
         <KpiCard
           icon={<WarningAmberIcon fontSize="inherit" />}
-          label="Active Stockout Alerts"
-          value={alertCount ?? withStockout}
+          label="CHPs with Stockouts"
+          value={chpsOut}
           color="#e65100"
-          subtitle="CHPs below threshold"
+          subtitle="Have at least one commodity at zero"
         />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
         <KpiCard
           icon={<CheckCircleOutlineIcon fontSize="inherit" />}
-          label="Reports - Adequate Stock"
-          value={ok}
-          color="#2e7d32"
-          subtitle="All commodities above threshold"
+          label="Stockout Commodity Lines"
+          value={lines}
+          color="#b71c1c"
+          subtitle="Total commodity lines at zero stock"
         />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
