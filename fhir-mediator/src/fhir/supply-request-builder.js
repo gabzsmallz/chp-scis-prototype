@@ -5,51 +5,40 @@ const { v4: uuidv4 } = require('uuid');
 /**
  * supply-request-builder.js
  *
- * Generates FHIR R4 SupplyRequest resources for two resupply scenarios:
- *
- *  type = 'lateral'  → CHP-to-CHP peer transfer within the same CHU
- *  type = 'formal'   → CHP requests resupply from their attached facility
- *                      (the facility then handles upward requisition to
- *                       sub-county → county pharmacist → KEMSA/MEDS)
+ * Builds a FHIR R4 SupplyRequest for formal CHP-to-facility resupply.
+ * The CHP requests stock from their attached facility; the facility handles
+ * the upward chain: sub-county coordinator → county pharmacist → KEMSA/MEDS.
  */
 
 /**
  * @param {Object} params
- * @param {'lateral'|'formal'} params.type
- * @param {string}  params.requesterChpId  - CHP who needs stock
- * @param {string}  [params.supplierChpId] - CHP donating stock (lateral only)
- * @param {string}  params.facilityId      - facility the CHP is attached to (formal only)
- * @param {string}  params.commodityCode   - KEMSA commodity code
- * @param {string}  params.commodityName   - human-readable name
- * @param {number}  params.quantityRequested
- * @param {string}  params.chuId
+ * @param {string} params.requesterChpId   - CHP who needs stock
+ * @param {string} params.facilityId       - facility the CHP is attached to
+ * @param {string} params.commodityCode    - KEMSA commodity code
+ * @param {string} params.commodityName    - human-readable name
+ * @param {number} params.quantityRequested
+ * @param {string} params.chuId
  * @returns {Object} FHIR R4 SupplyRequest
  */
 function buildSupplyRequest({
-  type,
   requesterChpId,
-  supplierChpId,
   facilityId,
   commodityCode,
   commodityName,
   quantityRequested,
   chuId
 }) {
-  const categoryDisplay = type === 'lateral'
-    ? 'CHP-to-CHP Lateral Transfer'
-    : 'Formal Facility Resupply Request';
-
-  const resource = {
+  return {
     resourceType: 'SupplyRequest',
     id:     uuidv4(),
     status: 'active',
     category: {
       coding: [{
         system:  'http://terminology.hl7.org/CodeSystem/supply-kind',
-        code:    type === 'lateral' ? 'central' : 'nonstock',
-        display: categoryDisplay
+        code:    'nonstock',
+        display: 'Formal Replenishment'
       }],
-      text: categoryDisplay
+      text: 'Formal Replenishment'
     },
     item: {
       itemCodeableConcept: {
@@ -74,29 +63,15 @@ function buildSupplyRequest({
       reference: `Location/${chuId}`,
       display:   `CHU ${chuId}`
     },
+    deliverFrom: {
+      reference: `Organization/${facilityId}`
+    },
     authoredOn: new Date().toISOString(),
-    extension: []
-  };
-
-  if (type === 'lateral' && supplierChpId) {
-    resource.extension.push({
-      url:            'https://chp-scis.health.go.ke/fhir/StructureDefinition/lateral-supplier',
-      valueReference: { reference: `Practitioner/${supplierChpId}` }
-    });
-    // For a lateral transfer, the supplier CHP is the performer
-    resource.deliverFrom = { reference: `Practitioner/${supplierChpId}` };
-  }
-
-  if (type === 'formal' && facilityId) {
-    resource.extension.push({
+    extension: [{
       url:            'https://chp-scis.health.go.ke/fhir/StructureDefinition/supplying-facility',
       valueReference: { reference: `Organization/${facilityId}` }
-    });
-    // The facility is the intended supplier
-    resource.deliverFrom = { reference: `Organization/${facilityId}` };
-  }
-
-  return resource;
+    }]
+  };
 }
 
 module.exports = { buildSupplyRequest };

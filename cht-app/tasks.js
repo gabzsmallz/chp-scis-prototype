@@ -118,4 +118,43 @@ const stockoutFollowupTask = {
   }]
 };
 
-module.exports = [monthlyStockReportTask, stockoutFollowupTask];
+// ── Task 3: CHA Stockout Escalation Alert ────────────────────────────────────
+// Fires against a chp_stockout_alert data_record written by the FHIR mediator
+// after it escalates a stockout to the facility via AfyaKE.
+// This is what surfaces the escalation inside eCHIS for the CHA to see.
+const stockoutEscalationTask = {
+  name:          'stockout_escalation',
+  icon:          'icon-warning',
+  title:         'CHP Stockout Escalated — Confirm Facility Notified',
+  appliesTo:     'reports',
+  appliesToType: ['chp_stockout_alert'],
+  appliesIf: function(contact, report) {
+    return report.form === 'chp_stockout_alert';
+  },
+  resolvedIf: function(contact, report) {
+    // Resolved once a follow-up stock_report for the same CHP shows stock > 0
+    return contact.reports.some(function(r) {
+      if (r.form !== 'stock_report') return false;
+      if (r.reported_date <= report.reported_date) return false;
+      var f = r.fields || {};
+      var code = f.commodity_code || '';
+      if (code !== report.fields.commodity_code) return false;
+      return parseInt(f.quantity_on_hand ?? 1, 10) > 0;
+    });
+  },
+  events: [{
+    id:    'stockout-escalation-due',
+    start: 0,
+    end:   13,
+    dueDate: function(event, contact, report) {
+      return new Date(report.reported_date);
+    }
+  }],
+  actions: [{
+    type:  'report',
+    form:  'stock_report',
+    label: 'Record Updated Stock'
+  }]
+};
+
+module.exports = [monthlyStockReportTask, stockoutFollowupTask, stockoutEscalationTask];

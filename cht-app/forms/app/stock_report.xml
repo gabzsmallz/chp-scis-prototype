@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<h:html xmlns="http://www.w3.org/2002/xforms"
+        xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns:ev="http://www.w3.org/2001/xml-events"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:jr="http://openrosa.org/javarosa">
+  <h:head>
+    <h:title>CHP Stock Report</h:title>
+    <model>
+      <instance>
+        <data id="stock_report" version="1">
+          <commodity_code/>
+          <commodity_name/>
+          <quantity_on_hand/>
+          <quantity_dispensed/>
+          <quantity_received/>
+          <expiry_date/>
+          <meta>
+            <instanceID/>
+          </meta>
+        </data>
+      </instance>
+
+      <bind nodeset="/data/commodity_code"     type="string" required="true()"/>
+      <bind nodeset="/data/commodity_name"     type="string"/>
+      <bind nodeset="/data/quantity_on_hand"   type="int"    required="true()" constraint=". >= 0"/>
+      <bind nodeset="/data/quantity_dispensed" type="int"    required="true()" constraint=". >= 0"/>
+      <bind nodeset="/data/quantity_received"  type="int"    required="true()" constraint=". >= 0"/>
+      <bind nodeset="/data/expiry_date"        type="date"/>
+      <bind nodeset="/data/meta/instanceID"    type="string" readonly="true()" calculate="concat('uuid:',uuid())"/>
+    </model>
+  </h:head>
+
+  <h:body>
+    <select1 ref="/data/commodity_code">
+      <label>Commodity</label>
+      <hint>Select the commodity you are reporting on</hint>
+      <item><label>Malaria RDT</label>                          <value>KE-RDT-MAL-001</value></item>
+      <item><label>Artemether-Lumefantrine ACT (6-dose)</label> <value>KE-ACT-AL-001</value></item>
+      <item><label>ORS Sachets</label>                          <value>KE-ORS-001</value></item>
+      <item><label>Zinc Sulphate 20mg</label>                   <value>KE-ZINC-20MG-001</value></item>
+      <item><label>Vitamin A 200,000 IU</label>                 <value>KE-VITA-200K-001</value></item>
+      <item><label>Insecticide-Treated Net (ITN)</label>        <value>KE-ITN-001</value></item>
+      <item><label>Amoxicillin 250mg</label>                    <value>KE-AMOX-250-001</value></item>
+      <item><label>Chlorhexidine 7.1% gel (cord care)</label>   <value>KE-CHLORHEX-001</value></item>
+      <item><label>Albendazole 400mg (deworming)</label>        <value>KE-DEWORMING-ALB-001</value></item>
+      <item><label>SP/Fansidar (IPTp)</label>                   <value>KE-FANSIDAR-001</value></item>
+      <item><label>Ferrous Sulphate + Folic Acid</label>        <value>KE-IRON-FOLATE-001</value></item>
+      <item><label>Male Condoms (pack of 3)</label>             <value>KE-FP-COND-001</value></item>
+      <item><label>Blood Glucose Test Strips</label>            <value>KE-BP-STRIPS-001</value></item>
+    </select1>
+
+    <input ref="/data/quantity_on_hand">
+      <label>Quantity on hand (current stock)</label>
+      <hint>How many units do you have right now?</hint>
+    </input>
+
+    <input ref="/data/quantity_dispensed">
+      <label>Quantity dispensed (since last report)</label>
+      <hint>How many units did you give out since your last report?</hint>
+    </input>
+
+    <input ref="/data/quantity_received">
+      <label>Quantity received (since last report)</label>
+      <hint>How many units did you receive from the facility?</hint>
+    </input>
+
+    <input ref="/data/expiry_date">
+      <label>Nearest expiry date in stock (optional)</label>
+    </input>
+  </h:body>
+</h:html>

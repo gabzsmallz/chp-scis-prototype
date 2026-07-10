@@ -12,6 +12,25 @@ version: "3.8"
 
 services:
 
+  # ─── CHT Form Seeder ─────────────────────────────────────────────────────────
+  # Uploads the stock_report form to CouchDB on every stack start.
+  # Exits after seeding — restartPolicy: on-failure ensures it only retries on error.
+  cht-seeder:
+    image: curlimages/curl:latest
+    container_name: cht-seeder
+    restart: "no"
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    volumes:
+      - ./scripts/seed-cht-forms.sh:/seed/seed.sh:ro
+      - ./cht-app/forms/app/stock_report.json:/seed/stock_report.json:ro
+      - ./cht-app/forms/app/stock_report.xml:/seed/stock_report.xml:ro
+      - ./cht-app/translations/translations-en.json:/seed/translations-en.json:ro
+    entrypoint: ["sh", "/seed/seed.sh"]
+    networks:
+      - chp-scis-net
+
   # ─── CHT Core ────────────────────────────────────────────────────────────────
   cht-api:
     image: public.ecr.aws/medic/cht-api:4.7.0

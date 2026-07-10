@@ -5,9 +5,8 @@
   "title": "CHP Stock Report",
   "icon": "icon-healthcare-medicine",
   "context": {
-    "person": false,
-    "place": true,
-    "expression": "user.role === 'chp'"
+    "person": true,
+    "place": true
   },
   "fields": {
     "inputs": {

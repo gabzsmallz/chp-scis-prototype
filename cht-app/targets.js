@@ -25,10 +25,17 @@ module.exports = [
     appliesIf: function(contact, report) {
       if (report.form !== 'stock_report') return false;
       var fields = report.fields || {};
-      var THRESHOLDS = { amoxicillin_stock: 10, ors_stock: 5, zinc_stock: 10, rdt_stock: 5, fp_pills_stock: 3, fp_injectables_stock: 2 };
-      return Object.keys(THRESHOLDS).some(function(key) {
-        return parseInt(fields[key] !== null && fields[key] !== undefined ? fields[key] : 999, 10) <= THRESHOLDS[key];
-      });
+      // New form layout: single commodity per submission
+      if (fields.commodity_code !== undefined) {
+        return parseInt(fields.quantity_on_hand !== undefined ? fields.quantity_on_hand : 1, 10) === 0;
+      }
+      // Repeating group layout: fields.commodities[]
+      if (Array.isArray(fields.commodities)) {
+        return fields.commodities.some(function(c) {
+          return parseInt(c.quantity_on_hand !== undefined ? c.quantity_on_hand : 1, 10) === 0;
+        });
+      }
+      return false;
     }
   }
 ];

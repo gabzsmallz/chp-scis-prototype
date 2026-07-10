@@ -1,96 +1,84 @@
 'use strict';
 
-const { queryNeighbourCHPs } = require('./lateral-supply-matcher');
-const { buildSupplyRequest }  = require('../fhir/supply-request-builder');
-const { postToAfyaKE }        = require('../adapters/afyake-adapter');
+const { buildSupplyRequest } = require('../fhir/supply-request-builder');
+const { postToAfyaKE }       = require('../adapters/afyake-adapter');
+const { writeStockoutAlert } = require('../adapters/couchdb-adapter');
 
 /**
  * stockout-detector.js
  *
- * For each commodity code that is at zero in the InventoryReport:
- *  1. Query chp_stock_latest for a neighbour CHP in the same CHU with surplus
- *  2. If found → build a lateral SupplyRequest (CHP-to-CHP)
- *  3. If not found → build a formal SupplyRequest and POST to AfyaKE (facility LMIS)
+ * For each commodity code at zero in the InventoryReport:
+ *  1. Build a formal FHIR R4 SupplyRequest and POST to AfyaKE (facility LMIS)
+ *  2. Write a chp_stockout_alert doc back to CouchDB so the CHA sees an
+ *     in-app escalation task inside eCHIS
  *
- * Returns a summary object for logging / OpenHIM audit trail.
+ * The facility handles upward requisition: sub-county → county pharmacist → KEMSA.
  */
 
 /**
  * @param {Object}   params
- * @param {Object}   params.inventoryReport   - FHIR R4 InventoryReport already built
- * @param {string[]} params.stockoutCodes      - commodity codes at zero
+ * @param {string[]} params.stockoutCodes     - commodity codes at zero
  * @param {string}   params.chpId
+ * @param {string}   params.chpName
  * @param {string}   params.chuId
- * @param {string}   params.facilityId         - facility the CHP is attached to
- * @param {Object}   params.commodityLabels    - { code: displayName } lookup
- * @param {import('pg').Pool} params.pool      - postgres pool for lateral query
- * @returns {Promise<{lateral: Object[], formal: Object[]}>}
+ * @param {string}   params.facilityId
+ * @param {Object}   params.commodityLabels   - { code: displayName }
+ * @returns {Promise<Object[]>}
  */
 async function detectAndResolveStockouts({
-  inventoryReport,
   stockoutCodes,
   chpId,
+  chpName,
   chuId,
   facilityId,
-  commodityLabels,
-  pool
+  commodityLabels
 }) {
-  const lateral = [];
-  const formal  = [];
+  const formal = [];
 
   for (const commodityCode of stockoutCodes) {
     const commodityName = commodityLabels[commodityCode] || commodityCode;
 
-    // 1. Try to find a lateral supplier in the same CHU
-    let neighbour = null;
+    // 1. Build formal SupplyRequest → AfyaKE (facility LMIS)
+    const supplyReq = buildSupplyRequest({
+      requesterChpId:    chpId,
+      facilityId,
+      commodityCode,
+      commodityName,
+      quantityRequested: 10,
+      chuId
+    });
+
+    console.log(`[stockout-detector] FORMAL escalation: CHP=${chpId} commodity=${commodityCode} → Facility=${facilityId}`);
+
+    let afyaKeResponse = null;
     try {
-      neighbour = await queryNeighbourCHPs(pool, chuId, chpId, commodityCode);
+      afyaKeResponse = await postToAfyaKE(supplyReq);
     } catch (err) {
-      console.warn(`[stockout-detector] lateral query failed for ${commodityCode}: ${err.message}`);
+      console.error(`[stockout-detector] AfyaKE POST failed for ${commodityCode}: ${err.message}`);
+      afyaKeResponse = { error: err.message };
     }
 
-    if (neighbour) {
-      // 2. Lateral SupplyRequest (CHP-to-CHP)
-      const supplyReq = buildSupplyRequest({
-        type:              'lateral',
-        requesterChpId:    chpId,
-        supplierChpId:     neighbour.chpId,
-        commodityCode,
-        commodityName,
-        quantityRequested: Math.min(neighbour.availableQty, 5), // ask for at most 5 units
-        chuId
-      });
-
-      console.log(`[stockout-detector] LATERAL match for ${commodityCode}: supplier CHP=${neighbour.chpId} (has ${neighbour.availableQty} units)`);
-      lateral.push({ commodityCode, supplyRequest: supplyReq, supplierChpId: neighbour.chpId });
-
-    } else {
-      // 3. Formal SupplyRequest → facility LMIS (AfyaKE)
-      const supplyReq = buildSupplyRequest({
-        type:              'formal',
-        requesterChpId:    chpId,
+    // 2. Write chp_stockout_alert back to CouchDB → CHA sees in-app task
+    let couchDbResult = null;
+    try {
+      couchDbResult = await writeStockoutAlert({
+        chpId,
+        chpName,
+        chuId,
         facilityId,
         commodityCode,
         commodityName,
-        quantityRequested: 10, // default resupply quantity
-        chuId
+        supplyRequestId: supplyReq.id
       });
-
-      console.log(`[stockout-detector] FORMAL request for ${commodityCode}: CHP=${chpId} → Facility=${facilityId}`);
-
-      let afyaKeResponse = null;
-      try {
-        afyaKeResponse = await postToAfyaKE(supplyReq);
-      } catch (err) {
-        console.error(`[stockout-detector] AfyaKE POST failed for ${commodityCode}: ${err.message}`);
-        afyaKeResponse = { error: err.message };
-      }
-
-      formal.push({ commodityCode, supplyRequest: supplyReq, afyaKeResponse });
+    } catch (err) {
+      console.error(`[stockout-detector] CouchDB write-back failed for ${commodityCode}: ${err.message}`);
+      couchDbResult = { error: err.message };
     }
+
+    formal.push({ commodityCode, supplyRequest: supplyReq, afyaKeResponse, couchDbAlert: couchDbResult });
   }
 
-  return { lateral, formal };
+  return formal;
 }
 
 module.exports = { detectAndResolveStockouts };

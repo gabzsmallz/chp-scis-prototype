@@ -153,51 +153,30 @@ router.post('/', async (req, res) => {
       console.error('[stock-route] PostgreSQL error:', err.message);
     }
 
-    // 5. Detect stockouts and trigger lateral or formal resupply
-    let stockoutResult = { lateral: [], formal: [] };
-    if (hasStockout && !pgError) {
+    // 5. Detect stockouts → always escalate formally to facility
+    let formalRequests = [];
+    if (hasStockout) {
       try {
-        stockoutResult = await detectAndResolveStockouts({
-          inventoryReport,
+        formalRequests = await detectAndResolveStockouts({
           stockoutCodes,
           chpId,
+          chpName,
           chuId,
           facilityId,
-          commodityLabels: COMMODITY_LABELS,
-          pool
+          commodityLabels: COMMODITY_LABELS
         });
 
-        // Persist lateral SupplyRequests
-        for (const entry of stockoutResult.lateral) {
+        // Persist formal SupplyRequests to supply_requests table
+        for (const entry of formalRequests) {
           await pool.query(
             `INSERT INTO supply_requests
                (request_id, type, requester_chp_id, supplier_chp_id,
                 facility_id, chu_id, commodity_code, quantity_requested,
                 status, fhir_resource)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9)
+             VALUES ($1,'formal',$2,$3,$4,$5,$6,$7,'active',$8)
              ON CONFLICT (request_id) DO NOTHING`,
             [
-              entry.supplyRequest.id, 'lateral',
-              chpId, entry.supplierChpId,
-              null, chuId,
-              entry.commodityCode,
-              entry.supplyRequest.quantity?.value || 1,
-              JSON.stringify(entry.supplyRequest)
-            ]
-          );
-        }
-
-        // Persist formal SupplyRequests
-        for (const entry of stockoutResult.formal) {
-          await pool.query(
-            `INSERT INTO supply_requests
-               (request_id, type, requester_chp_id, supplier_chp_id,
-                facility_id, chu_id, commodity_code, quantity_requested,
-                status, fhir_resource)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9)
-             ON CONFLICT (request_id) DO NOTHING`,
-            [
-              entry.supplyRequest.id, 'formal',
+              entry.supplyRequest.id,
               chpId, null,
               facilityId, chuId,
               entry.commodityCode,
@@ -208,7 +187,7 @@ router.post('/', async (req, res) => {
         }
       } catch (err) {
         console.error('[stock-route] stockout-detector error:', err.message);
-        stockoutResult = { error: err.message };
+        formalRequests = [{ error: err.message }];
       }
     }
 
@@ -220,7 +199,7 @@ router.post('/', async (req, res) => {
       ilmis:     ilmisResponse,
       dhis2:     dhis2Response,
       postgres:  pgError ? { error: pgError } : { ok: true },
-      resupply:  stockoutResult
+      resupply:  { formal: formalRequests }
     });
 
   } catch (err) {
