@@ -22,6 +22,8 @@ services:
     depends_on:
       couchdb:
         condition: service_healthy
+      cht-api:
+        condition: service_started
     volumes:
       - ./scripts/seed-cht-forms.sh:/seed/seed.sh:ro
       - ./cht-app/forms/app/stock_report.json:/seed/stock_report.json:ro
