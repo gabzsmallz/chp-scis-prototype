@@ -8,7 +8,7 @@ const { writeStockoutAlert } = require('../adapters/couchdb-adapter');
  * stockout-detector.js
  *
  * For each commodity code at zero in the InventoryReport:
- *  1. Build a formal FHIR R4 SupplyRequest and POST to AfyaKE (facility LMIS)
+ *  1. Build a formal FHIR R5 SupplyRequest and POST to AfyaKE (facility LMIS)
  *  2. Write a chp_stockout_alert doc back to CouchDB so the CHA sees an
  *     in-app escalation task inside eCHIS
  *

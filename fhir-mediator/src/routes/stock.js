@@ -46,7 +46,7 @@ const COMMODITY_LABELS = {
  * Body: CHT stock_report document (JSON)
  *
  * Pipeline:
- *  1. Map CHT doc → FHIR R4 InventoryReport
+ *  1. Map CHT doc → FHIR R5 InventoryReport
  *  2. POST InventoryReport to iLMIS stub  (facility-level CHP stock visibility)
  *  3. POST stock event to DHIS2 stub      (aggregate reporting)
  *  4. Persist to PostgreSQL               (dashboard + lateral matcher)
@@ -65,7 +65,7 @@ router.post('/', async (req, res) => {
     const chuId      = doc.contact?.parent?._id  || 'unknown-chu';
     const facilityId = doc.fields?.facility_id   || chuId;
 
-    // 1. Map to FHIR R4 InventoryReport
+    // 1. Map to FHIR R5 InventoryReport
     const inventoryReport = chtToFhirInventoryReport(doc);
     const stockoutCodes   = getStockoutCodes(inventoryReport);
     const hasStockout     = stockoutCodes.length > 0;

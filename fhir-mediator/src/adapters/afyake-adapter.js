@@ -5,7 +5,7 @@ const axios = require('axios');
 /**
  * afyake-adapter.js
  *
- * Sends a formal FHIR R4 SupplyRequest to AfyaKE — the facility-level EMR/LMIS.
+ * Sends a formal FHIR R5 SupplyRequest to AfyaKE — the facility-level EMR/LMIS.
  *
  * In the Kenya supply chain, CHPs get stock FROM their attached facility.
  * When a CHP has a stockout and no lateral neighbour can help, this adapter
@@ -18,7 +18,7 @@ const AFYAKE_URL = process.env.AFYAKE_URL || 'http://afyake-stub:4502';
 
 /**
  * POST a SupplyRequest to AfyaKE.
- * @param {Object} supplyRequest - FHIR R4 SupplyRequest
+ * @param {Object} supplyRequest - FHIR R5 SupplyRequest
  * @returns {Promise<Object>}    - AfyaKE response body
  */
 async function postToAfyaKE(supplyRequest) {

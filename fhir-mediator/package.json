@@ -1,7 +1,7 @@
 {
     "name": "fhir-mediator",
     "version": "2.0.0",
-    "description": "CHP-SCIS FHIR R4 Mediator: bridges CHT referral events to KenyaEMR, iLMIS, and DHIS2 via OpenHIM",
+    "description": "CHP-SCIS FHIR R5 Mediator: bridges CHT stock reports to iLMIS, DHIS2, and AfyaKE via OpenHIM",
     "main": "src/index.js",
     "scripts": {
           "start": "node src/index.js",

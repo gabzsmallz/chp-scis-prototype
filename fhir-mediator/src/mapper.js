@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 
 /**
  * mapper.js
- * Transforms a CHT stock_report document into a FHIR R4 InventoryReport resource.
+ * Transforms a CHT stock_report document into a FHIR R5 InventoryReport resource.
  *
  * CHT stock_report form fields:
  *   doc.fields.commodities[]            - repeating group, one entry per commodity
@@ -23,9 +23,9 @@ const { v4: uuidv4 } = require('uuid');
 const STOCKOUT_THRESHOLD = 0; // quantity_on_hand = 0 → stockout
 
 /**
- * Convert a CHT stock_report doc to a FHIR R4 InventoryReport.
+ * Convert a CHT stock_report doc to a FHIR R5 InventoryReport.
  * @param {Object} doc  - CouchDB document from CHT
- * @returns {Object}    - FHIR R4 InventoryReport resource
+ * @returns {Object}    - FHIR R5 InventoryReport resource
  */
 function chtToFhirInventoryReport(doc) {
   const reportedDate = new Date(doc.reported_date).toISOString();
@@ -125,7 +125,7 @@ function normaliseCommodities(fields) {
 /**
  * Returns the list of commodity codes with zero stock from an InventoryReport.
  * Used by the stockout detector.
- * @param {Object} inventoryReport - FHIR R4 InventoryReport
+ * @param {Object} inventoryReport - FHIR R5 InventoryReport
  * @returns {string[]} commodity codes at zero
  */
 function getStockoutCodes(inventoryReport) {

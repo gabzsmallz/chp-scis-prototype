@@ -1,7 +1,7 @@
 {
     "name": "ilmis-stub",
     "version": "1.0.0",
-    "description": "Mock KEMSA iLMIS FHIR R4 endpoint for CHP-SCIS simulation",
+    "description": "Mock iLMIS FHIR R5 endpoint for CHP-SCIS simulation",
     "main": "index.js",
     "scripts": { "start": "node index.js" },
     "dependencies": { "express": "^4.18.2" },

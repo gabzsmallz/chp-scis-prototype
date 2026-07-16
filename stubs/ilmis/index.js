@@ -2,7 +2,7 @@
 
 /**
  * stubs/ilmis/index.js
- * Mock iLMIS FHIR R4 endpoint — represents the facility-level LMIS.
+ * Mock iLMIS FHIR R5 endpoint — represents the facility-level LMIS.
  *
  * Receives FHIR InventoryReport resources posted by the FHIR mediator
  * to give the facility visibility of its attached CHPs' stock levels.

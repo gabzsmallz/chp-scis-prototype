@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 /**
  * supply-request-builder.js
  *
- * Builds a FHIR R4 SupplyRequest for formal CHP-to-facility resupply.
+ * Builds a FHIR R5 SupplyRequest for formal CHP-to-facility resupply.
  * The CHP requests stock from their attached facility; the facility handles
  * the upward chain: sub-county coordinator → county pharmacist → KEMSA/MEDS.
  */
@@ -18,7 +18,7 @@ const { v4: uuidv4 } = require('uuid');
  * @param {string} params.commodityName    - human-readable name
  * @param {number} params.quantityRequested
  * @param {string} params.chuId
- * @returns {Object} FHIR R4 SupplyRequest
+ * @returns {Object} FHIR R5 SupplyRequest
  */
 function buildSupplyRequest({
   requesterChpId,

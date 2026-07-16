@@ -5,9 +5,9 @@
  * Mock AfyaKE facility EMR/LMIS endpoint for CHP-SCIS simulation.
  *
  * AfyaKE is the facility-level electronic medical record and LMIS used by
- * health facilities in Kenya.  When a CHP has a stockout and no lateral
- * neighbour can help, the FHIR mediator posts a formal FHIR R4 SupplyRequest
- * here so that the facility's supply officer can see and fulfil the request.
+ * health facilities in Kenya. When a CHP has a stockout, the FHIR mediator
+ * posts a formal FHIR R5 SupplyRequest here so the facility's supply officer
+ * can see and fulfil the request.
  *
  * The facility then manages its own upward requisition chain:
  *   facility → sub-county commodity coordinator → county pharmacist → KEMSA/MEDS

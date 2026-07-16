@@ -184,7 +184,7 @@ services:
     networks:
       - chp-scis-net
 
-  # ─── FHIR R4 Mediator (Node.js) ──────────────────────────────────────────────
+  # ─── FHIR R5 Mediator (Node.js) ──────────────────────────────────────────────
   fhir-mediator:
     build:
       context: ./fhir-mediator
