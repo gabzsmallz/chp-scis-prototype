@@ -1,57 +1,54 @@
 # CHP-SCIS Prototype
 
-**Integrating CHP Referral Data as Demand Signals into Kenya's National Health Supply Chain**
+**Improving Community Health Promoter Commodity Management Through FHIR-Based Stock Visibility in Kenya's Community Health Supply Chain**
 
-> University of Nairobi · MSc Applied Computing · DSR Dissertation Prototype  
-> Researcher: George Ngambi Githae (P51/6194/2017)  
+> University of Nairobi · MSc Applied Computing · DSR Dissertation Prototype
+> Researcher: George Ngambi Githae (P51/6194/2017)
 > Supervisor: Prof. Peter Waiganjo
 
 ---
 
 ## The Problem This Solves
 
-Community Health Promoters (CHPs) in Nairobi conduct household health screenings and issue
-paper referral slips directing patients to health facilities. The paper slips get lost, leaving
-**no data trail**. Kenya's supply chain (iLMIS/KEMSA) is therefore blind to community-generated
-demand — facilities run out of medicines because no one can see patients coming.
+Community Health Promoters (CHPs) in Nairobi record commodity stock-on-hand largely on paper or in siloed eCHIS records that never reach the facility or county level. Kenya's supply chain (iLMIS/KEMSA) is therefore blind to CHP-level stock status — facilities and counties only learn about a stockout long after it has already disrupted service delivery.
 
-**This prototype demonstrates:** CHPs record digital referrals in eCHIS → an ICD-10
-referral-to-commodity mapping engine derives demand signals → FHIR `ServiceRequest` resources
-are routed via an OpenHIE mediator to **KenyaEMR** (facility EMR) and **KEMSA iLMIS**
-(national supply chain) → facility managers and county planners see anticipated demand
-before patients arrive.
+**This prototype demonstrates:** CHPs record multi-commodity stock reports in eCHIS (CHT) → a FHIR mediator transforms each report into a FHIR R5 `InventoryReport` → the report is forwarded to the facility LMIS (iLMIS stub), county aggregate reporting (DHIS2 stub), and a PostgreSQL store for the dashboard → any commodity at zero stock is detected and a formal FHIR `SupplyRequest` is escalated to the CHP's attached facility (AfyaKE stub), with an in-app alert written back into eCHIS so the CHA can see and track the escalation.
+
+Earlier iterations of this prototype explored a CHP-to-CHP **lateral resupply** mechanism (matching a stockout against a neighbouring CHP's surplus before escalating). Field questionnaire findings (CHP/CHA pre- and post-demo instruments, July 2026) showed stockout duration is driven mainly by upstream supply availability and facility response capacity rather than by CHP-to-CHP data blindness, and that visibility does not, by CHAs' own account, automatically change resupply behaviour. The lateral mechanism was dropped accordingly; the current prototype focuses on stock visibility and formal facility escalation only, consistent with the revised conceptual framework and research questions.
 
 ---
 
 ## Architecture
 
 ```
-Android Phone (CHP)
+Android Phone / Browser (CHP)
       │
-  CHT App (referral form — ICD-10 condition, facility, urgency)
+  CHT App — stock_report form (multi-commodity: code, qty on hand/dispensed/received, expiry)
       │
   Medic CHT 4.7  ◄──►  CouchDB
       │
-  POST /referral (JSON CHT document)
+  POST /stock-report (JSON CHT document)
       │
-  ┌───▼──────────────────────────────────────────┐
-  │  FHIR Mediator (Node.js / OpenHIM)           │
-  │                                               │
-  │  1. Map CHT doc → FHIR R4 ServiceRequest     │
-  │  2. ICD-10 → commodity demand lookup         │
-  │  3. Route to KenyaEMR (facility EMR)         │
-  │  4. Route demand signal to iLMIS             │
-  │  5. Log referral event to DHIS2 Tracker      │
-  │  6. Persist to PostgreSQL for dashboard      │
-  └──┬───────────┬──────────────┬────────────────┘
-     │           │              │
-KenyaEMR    iLMIS stub     DHIS2 stub
-  stub       (KEMSA)        (county)
-     │
-  Decision Dashboard (React)
-  - Referral Log (all ServiceRequests)
-  - Emergency Alerts
-  - Commodity Demand chart (referral count per commodity)
+  ┌───▼────────────────────────────────────────────────────────┐
+  │  FHIR Mediator (Node.js / Express, registered with OpenHIM) │
+  │                                                              │
+  │  1. Map CHT doc → FHIR R5 InventoryReport                  │
+  │  2. POST InventoryReport → iLMIS stub (facility visibility) │
+  │  3. POST stock event → DHIS2 stub (county aggregate)        │
+  │  4. Persist to PostgreSQL (dashboard)                       │
+  │  5. If any commodity = 0: build FHIR SupplyRequest,         │
+  │     POST to AfyaKE stub, write chp_stockout_alert to        │
+  │     CouchDB so the CHA sees an in-app escalation task       │
+  └──┬───────────┬──────────────┬───────────────┬───────────────┘
+     │           │              │               │
+  iLMIS stub  DHIS2 stub   AfyaKE stub      PostgreSQL
+  (KEMSA)     (county)     (facility LMIS)  (stock_reports,
+                                              supply_requests)
+                                                  │
+                                          Decision Dashboard (React)
+                                          - Stock Overview table
+                                          - Stockout Alerts panel
+                                          - Commodity stock chart
 ```
 
 ---
@@ -62,54 +59,64 @@ KenyaEMR    iLMIS stub     DHIS2 stub
 chp-scis-prototype/
 ├── docker-compose.yml
 ├── postgres/
-│   └── init.sql                     ← referrals table schema + indexes
+│   └── init.sql                        ← stock_reports + supply_requests schema, chp_stock_latest view
 ├── cht-app/
 │   ├── app_settings.json
 │   ├── contact-summary.js
 │   ├── targets.js
-│   ├── tasks.js                     ← referral_submission + emergency_followup tasks
-│   └── forms/
-│       └── stock_report.json        ← CHT referral form (condition, facility, urgency)
+│   ├── tasks.js                        ← monthly_stock_report, stockout_followup, stockout_escalation tasks
+│   └── forms/app/
+│       ├── stock_report.json
+│       └── stock_report.xml            ← multi-commodity CHT stock reporting form
 ├── fhir-mediator/
 │   ├── Dockerfile
 │   ├── package.json
 │   └── src/
-│       ├── index.js                 ← Express server + OpenHIM registration
-│       ├── mapper.js                ← CHT doc → FHIR R4 ServiceRequest
-│       ├── mapping/
-│       │   ├── icd10-commodity-map.json   ← 7 conditions → 10 commodities
-│       │   └── referral-mapper.js         ← getCommodityDemand(), getConditionLabel()
+│       ├── index.js                    ← Express server + OpenHIM mediator registration
+│       ├── mapper.js                   ← CHT stock_report doc → FHIR R5 InventoryReport
+│       ├── engine/
+│       │   └── stockout-detector.js    ← builds SupplyRequest + escalates to AfyaKE + CouchDB alert
+│       ├── fhir/
+│       │   └── supply-request-builder.js  ← FHIR R5 SupplyRequest (formal, CHP → facility)
 │       ├── adapters/
-│       │   └── kenyaemr-adapter.js        ← OAuth2 + POST to KenyaEMR FHIR endpoint
+│       │   ├── afyake-adapter.js       ← POSTs SupplyRequest to AfyaKE (facility LMIS)
+│       │   └── couchdb-adapter.js      ← writes chp_stockout_alert back into CHT/CouchDB
 │       └── routes/
-│           ├── stock.js             ← POST /referral (full pipeline)
-│           └── reports.js           ← GET /reports/referrals|summary|demand|alerts
+│           ├── stock.js                ← POST /stock-report (full pipeline)
+│           └── reports.js              ← GET /reports/stock|summary|alerts|supply-requests
 ├── stubs/
-│   ├── ilmis/index.js               ← Mock KEMSA iLMIS — accepts ServiceRequest
-│   └── dhis2/index.js               ← Mock DHIS2 Tracker — referral demand events
+│   ├── ilmis/index.js                  ← Mock facility iLMIS — accepts InventoryReport
+│   ├── dhis2/index.js                  ← Mock DHIS2 Tracker — CHP stock events + analytics
+│   └── afyake/index.js                 ← Mock AfyaKE facility EMR/LMIS — accepts SupplyRequest
 └── dashboard/
     └── src/
         ├── App.jsx
         └── components/
-            ├── SummaryCards.jsx     ← Total referrals, emergencies, active CHUs
-            ├── StockTable.jsx       ← Referral log table (sortable)
-            ├── StockoutAlerts.jsx   ← Emergency referrals panel
-            └── StockChart.jsx       ← Commodity demand bar chart
+            ├── SummaryCards.jsx        ← Total reports, stockout count, CHPs with stockouts
+            ├── StockTable.jsx          ← Latest stock per CHP × commodity (sortable)
+            ├── StockoutAlerts.jsx      ← Commodities currently at zero, grouped by CHP
+            └── StockChart.jsx          ← Commodity stock levels chart
 ```
 
 ---
 
-## ICD-10 → Commodity Mapping
+## Commodity Master List (Kenya National CHP Kit)
 
-| ICD-10 | Condition | Commodities triggered |
-|--------|-----------|----------------------|
-| B50–B54 | Malaria | Malaria RDT + ACT (AL) |
-| A09 | Diarrhoea | ORS + Zinc |
-| J06 | Acute Upper Respiratory Infection | Amoxicillin 250mg |
-| J22 | Pneumonia / Acute Lower RI | Amoxicillin 250mg |
-| Z30 | Family Planning Consultation | Combined OCP + Condoms |
-| Z34 | Antenatal Care | SP/Fansidar (IPTp) + Iron/Folate |
-| P00–P04 | Newborn / Neonatal Referral | Chlorhexidine (cord care) |
+| Code | Commodity |
+|------|-----------|
+| KE-RDT-MAL-001 | Malaria Rapid Diagnostic Test (RDT) |
+| KE-ACT-AL-001 | Artemether-Lumefantrine ACT (6-dose) |
+| KE-ORS-001 | Oral Rehydration Salts (ORS) — sachet |
+| KE-ZINC-20MG-001 | Zinc Sulphate 20mg tablet |
+| KE-VITA-200K-001 | Vitamin A 200,000 IU capsule |
+| KE-ITN-001 | Insecticide-Treated Net (ITN/LLIN) |
+| KE-AMOX-250-001 | Amoxicillin 250mg capsule |
+| KE-CHLORHEX-001 | Chlorhexidine 7.1% gel (cord care) |
+| KE-DEWORMING-ALB-001 | Albendazole 400mg tablet |
+| KE-FANSIDAR-001 | Sulfadoxine-Pyrimethamine/Fansidar (IPTp) |
+| KE-IRON-FOLATE-001 | Ferrous Sulphate + Folic Acid tablet |
+| KE-FP-COND-001 | Male condom (pack of 3) |
+| KE-BP-STRIPS-001 | Blood glucose test strips |
 
 ---
 
@@ -146,8 +153,7 @@ Start the stack:
 docker compose up -d
 ```
 
-First run: ~5–10 minutes. The PostgreSQL `referrals` table is created automatically
-from `postgres/init.sql` on first boot.
+First run: ~5–10 minutes. The `cht-seeder` service uploads the `stock_report` form to CouchDB automatically. The PostgreSQL schema (`stock_reports`, `supply_requests`, `chp_stock_latest` view) is created automatically from `postgres/init.sql` on first boot.
 
 ### 2. Access points
 
@@ -159,18 +165,11 @@ from `postgres/init.sql` on first boot.
 | Decision Dashboard | http://localhost:4000 | — |
 | iLMIS Stub | http://localhost:4500/health | — |
 | DHIS2 Stub | http://localhost:4501/health | admin / district |
+| AfyaKE Stub | http://localhost:4502/health | — |
 | CouchDB | http://localhost:5984 | admin / medic |
 | PostgreSQL | localhost:5432 | cht / cht |
 
-### 3. Deploy CHT app config
-
-```bash
-npm install -g cht-conf
-cd cht-app
-cht --url=http://admin:medic@localhost:5988
-```
-
-### 4. Create CHP simulation users
+### 3. Create CHP simulation users
 
 In CHT WebApp → **Admin > Users**, create 5–10 users with:
 - Role: `chp`
@@ -188,24 +187,26 @@ In CHT WebApp → **Admin > Users**, create 5–10 users with:
 ### CHP participant steps (Android phone or browser)
 1. Open Chrome → navigate to `http://<laptop-IP>:5988`
 2. Log in with the CHP account you created
-3. Tap **Tasks** → tap **Record Referral**
-4. Fill in:
-   - **Condition:** select an ICD-10 condition (e.g. Malaria)
-   - **Destination Facility:** select a health centre
-   - **Urgency:** Routine / Urgent / Emergency
-   - **Patient Age Group:** select one
+3. Tap **Tasks** → tap **Submit Stock Report**
+4. Fill in, for each commodity in the kit:
+   - **Commodity:** select from the commodity picker
+   - **Quantity on hand / dispensed / received**
+   - **Expiry date** (nearest expiry in stock)
 5. Submit
 
 ### What happens after submission
 ```
 CHT form submitted
   → CHT stores document in CouchDB
-  → FHIR Mediator receives POST /referral
-  → Maps to FHIR R4 ServiceRequest (with ICD-10 code + commodity demand extension)
-  → Posts to KenyaEMR stub (facility receives referral)
-  → Posts to iLMIS stub (demand signal recorded)
-  → Posts to DHIS2 stub (Tracker event logged)
-  → Persists to PostgreSQL
+  → FHIR Mediator receives POST /stock-report
+  → Maps to FHIR R5 InventoryReport (per-commodity items + stockout-codes extension)
+  → Posts to iLMIS stub (facility visibility of CHP stock)
+  → Posts to DHIS2 stub (county aggregate reporting)
+  → Persists to PostgreSQL (stock_reports)
+  → If any commodity = 0:
+      → Builds FHIR SupplyRequest, posts to AfyaKE stub (facility LMIS)
+      → Writes chp_stockout_alert back to CouchDB
+      → CHA sees "CHP Stockout Escalated" task in eCHIS
   → Dashboard auto-refreshes within 60 seconds
 ```
 
@@ -214,14 +215,17 @@ CHT form submitted
 # Mediator logs (watch in real time)
 docker compose logs -f fhir-mediator
 
-# Confirm iLMIS received the ServiceRequest
-curl http://localhost:4500/fhir/ServiceRequest
+# Confirm iLMIS received the InventoryReport
+curl http://localhost:4500/fhir/InventoryReport
 
-# Confirm DHIS2 received the referral event
+# Confirm AfyaKE received a formal SupplyRequest (after a stockout)
+curl http://localhost:4502/fhir/SupplyRequest
+
+# Confirm DHIS2 received the stock event
 curl -u admin:district http://localhost:4501/api/events
 
-# Query the PostgreSQL referrals table directly
-docker exec -it postgres psql -U cht -d cht -c "SELECT doc_id, condition_code, urgency, destination_facility, commodity_codes FROM referrals ORDER BY reported_date DESC LIMIT 10;"
+# Query the PostgreSQL stock_reports table directly
+docker exec -it postgres psql -U cht -d cht -c "SELECT chp_id, chu_id, commodity_code, quantity_on_hand, has_stockout, reported_date FROM chp_stock_latest ORDER BY reported_date DESC LIMIT 10;"
 ```
 
 ---
@@ -262,7 +266,7 @@ processors=4
 ```
 Then: `wsl --shutdown`
 
-**`referrals` table doesn't exist (PostgreSQL was already initialised):**
+**`stock_reports`/`supply_requests` tables don't exist (PostgreSQL was already initialised):**
 ```bash
 docker compose down -v
 docker compose up -d
@@ -278,25 +282,26 @@ The `-v` flag removes the old postgres data volume so `init.sql` runs fresh.
 | Community Health App | Medic CHT 4.7 (eCHIS-compatible) |
 | Integration Engine | OpenHIM Core v8.5.1 |
 | FHIR Mediator | Node.js 20 + Express |
-| FHIR Standard | HL7 FHIR R4 — ServiceRequest |
-| ICD-10 Mapping | Custom JSON engine (`icd10-commodity-map.json`) |
-| Facility EMR | KenyaEMR stub (OpenMRS FHIR R4) |
-| Supply Chain | iLMIS stub (KEMSA) |
-| Health Information | DHIS2 Tracker stub |
+| FHIR Standard | HL7 FHIR R5 — InventoryReport, SupplyRequest |
+| Facility LMIS | AfyaKE stub (formal resupply escalation) |
+| Supply Chain | iLMIS stub (KEMSA — CHP stock visibility) |
+| Health Information | DHIS2 Tracker stub (county aggregate) |
 | Decision Dashboard | React 18 + MUI + Recharts |
-| Persistence | PostgreSQL 15 (referrals table) |
+| Persistence | PostgreSQL 15 (`stock_reports`, `supply_requests`) |
 | Containerisation | Docker Compose |
+
+Note: `cht-sync` (CouchDB → PostgreSQL, for population-level analytics) is scaffolded in `docker-compose.yml` but commented out — no pre-built image currently exists. Build it from [medic/cht-sync](https://github.com/medic/cht-sync) if that layer is needed; the mediator currently persists to PostgreSQL directly on each stock report.
 
 ---
 
 ## Research Context
 
-Prototype supports DSR Cycle 3 simulation-based evaluation:
+Prototype supports DSR Cycle 3 evaluation:
 
 - **SUS score** (System Usability Scale) — target ≥ 68
-- **Task completion rate** — % of CHPs who submit a referral within 5 minutes
-- **Time-on-task** — median time from task trigger to referral submission
-- **Demand signal latency** — time from CHP submission to iLMIS/DHIS2 receipt
-- **Perceived utility** — qualitative interviews (Appendix B.3)
+- **Data completeness / latency** — required FHIR InventoryReport fields present; time from CHP submission to iLMIS/DHIS2 receipt
+- **Functional test pass rate** — InventoryReport/SupplyRequest FHIR conformance, stockout detection, formal escalation
+- **Specialist-assessed feasibility and usability** — supply chain specialists evaluate workflow alignment and functional correctness
+- **Stockout impact** — assessed via specialist-guided scenario analysis, conditional on facility response capacity and upstream (KEMSA/county) supply availability, per the revised conceptual framework
 
 Evaluation instruments: Appendices B.1–B.4 of the thesis document.

@@ -99,12 +99,12 @@ router.get('/alerts', async (req, res) => {
 
 /**
  * GET /reports/supply-requests
- * Recent SupplyRequests (lateral + formal) for audit display.
+ * Recent formal SupplyRequests for audit display.
  */
 router.get('/supply-requests', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT request_id, type, requester_chp_id, supplier_chp_id,
+      SELECT request_id, type, requester_chp_id,
              facility_id, chu_id, commodity_code, quantity_requested,
              status, created_at
       FROM   supply_requests

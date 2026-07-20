@@ -8,10 +8,10 @@ const axios = require('axios');
  * Sends a formal FHIR R5 SupplyRequest to AfyaKE — the facility-level EMR/LMIS.
  *
  * In the Kenya supply chain, CHPs get stock FROM their attached facility.
- * When a CHP has a stockout and no lateral neighbour can help, this adapter
- * posts a SupplyRequest to the facility so that the facility's supply officer
- * can fulfil the request.  The facility then manages its own upward requisition
- * chain: facility → sub-county commodity coordinator → county pharmacist → KEMSA.
+ * When a CHP has a stockout, this adapter posts a SupplyRequest to the facility
+ * so that the facility's supply officer can fulfil the request. The facility
+ * then manages its own upward requisition chain: facility → sub-county
+ * commodity coordinator → county pharmacist → KEMSA.
  */
 
 const AFYAKE_URL = process.env.AFYAKE_URL || 'http://afyake-stub:4502';

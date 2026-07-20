@@ -19,7 +19,7 @@ const mediatorConfig = {
   urn:         'urn:mediator:chp-scis-fhir-mediator',
   version:     '2.0.0',
   name:        'CHP-SCIS FHIR Stock Mediator',
-  description: 'Transforms CHT stock reports to FHIR InventoryReport, detects stockouts, triggers lateral CHP-to-CHP or formal facility SupplyRequests, and forwards to iLMIS, AfyaKE, DHIS2 and PostgreSQL.',
+  description: 'Transforms CHT stock reports to FHIR InventoryReport, detects stockouts, triggers formal facility SupplyRequests to AfyaKE, and forwards to iLMIS, DHIS2 and PostgreSQL.',
   defaultChannelConfig: [
     {
       name:       'CHP Stock Report Channel',

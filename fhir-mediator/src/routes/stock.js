@@ -49,8 +49,8 @@ const COMMODITY_LABELS = {
  *  1. Map CHT doc → FHIR R5 InventoryReport
  *  2. POST InventoryReport to iLMIS stub  (facility-level CHP stock visibility)
  *  3. POST stock event to DHIS2 stub      (aggregate reporting)
- *  4. Persist to PostgreSQL               (dashboard + lateral matcher)
- *  5. Detect stockouts → lateral or formal SupplyRequest
+ *  4. Persist to PostgreSQL               (dashboard)
+ *  5. Detect stockouts → formal SupplyRequest to attached facility (AfyaKE)
  */
 router.post('/', async (req, res) => {
   try {
@@ -170,14 +170,14 @@ router.post('/', async (req, res) => {
         for (const entry of formalRequests) {
           await pool.query(
             `INSERT INTO supply_requests
-               (request_id, type, requester_chp_id, supplier_chp_id,
+               (request_id, type, requester_chp_id,
                 facility_id, chu_id, commodity_code, quantity_requested,
                 status, fhir_resource)
-             VALUES ($1,'formal',$2,$3,$4,$5,$6,$7,'active',$8)
+             VALUES ($1,'formal',$2,$3,$4,$5,$6,'active',$7)
              ON CONFLICT (request_id) DO NOTHING`,
             [
               entry.supplyRequest.id,
-              chpId, null,
+              chpId,
               facilityId, chuId,
               entry.commodityCode,
               entry.supplyRequest.quantity?.value || 1,
